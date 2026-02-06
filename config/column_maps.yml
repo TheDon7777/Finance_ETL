@@ -1,0 +1,11 @@
+sales:
+  date: "order_date"
+  revenue: "revenue"
+  department: null
+
+budget_actual:
+  date: "Date"
+  department: "Department"
+  category: "Category"
+  actual: "Actual Amount"
+  budget: "Budget Amount"

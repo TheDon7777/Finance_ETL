@@ -1,0 +1,20 @@
+# Core language / data
+python-dateutil>=2.8
+pandas>=2.1
+numpy>=1.26
+
+# File formats
+openpyxl>=3.1        # XLSX support for budget files
+
+# Validation / config
+pyyaml>=6.0
+
+# Database (PostgreSQL)
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+
+# Visualization export support
+matplotlib>=3.8      # optional, but already used in your projects
+
+# Web UI
+streamlit>=1.31

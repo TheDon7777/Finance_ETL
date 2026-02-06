@@ -1,0 +1,8 @@
+postgres:
+  host: "localhost"
+  port: 5432
+  dbname: "finance_etl"
+  user: "finance_user"
+  password: "finance_pass"
+  schema: "public"
+

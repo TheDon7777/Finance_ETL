@@ -1,0 +1,9 @@
+raw_category,canonical_category,default_department
+Revenue,Revenue,Sales
+Sales,Revenue,Sales
+COGS,COGS,Ops
+Payroll,Payroll,HR
+Salaries,Payroll,HR
+Rent,Rent,Ops
+Marketing,Marketing,Ops
+Utilities,Utilities,Ops
