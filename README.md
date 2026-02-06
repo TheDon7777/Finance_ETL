@@ -1,4 +1,4 @@
-Financial ETL Tool
+Finance ETL
 
 A production-grade, auditable ETL pipeline for financial data with:
 
