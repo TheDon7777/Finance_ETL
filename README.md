@@ -1,216 +1,91 @@
-Finance ETL
+# Financial Data Governance & ETL Platform
 
-A production-grade, auditable ETL pipeline for financial data with:
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io)
+[![Status](https://img.shields.io/badge/Status-Production--Grade-success?style=for-the-badge)]()
 
-Fast change detection (row hashing)
+**A production-grade, auditable ETL pipeline designed to treat financial data with the rigor it deserves.**
 
-True before/after diffs
+Unlike standard scripts that blindly overwrite tables, this platform focuses on **Data Trust**. It features cryptographic change detection, immutable audit logs, point-in-time recovery, and granular diff summaries to ensure no transaction is ever lost or corrupted.
 
-Streamlit UI
+> **Design Philosophy:** Behave like a real enterprise data platform, not a demo. Deterministic, idempotent, and transparent.
 
-State images + rollback (single event or point-in-time)
+---
 
-Minimal disk usage (ephemeral uploads)
+## 📸 Interface Preview
 
-Deterministic, idempotent runs
+### Granular Reconciliation
 
-Designed to behave like a real data platform, not a demo.
+  <img src="https://github.com/user-attachments/assets/8458cf75-5a73-4b48-8bee-37b4a5a58711" height=300px />
+  <img src="https://github.com/user-attachments/assets/550b7e09-2002-4c5d-b7c3-007cd44f79b1" height=300px width=450px />
+</p>
 
-✨ Key Features
-🔄 ETL Pipeline
+### *Automated detection of exact cell-level changes (Before vs. After) preventing silent data corruption.*
+---
 
-Extract
+## ✨ Key Features
 
-CSV / Excel support
+### 🔄 Robust ETL Pipeline
+* **Ephemeral Ingestion:** Processes uploads in memory/temp storage; auto-cleans artifacts to minimize disk footprint.
+* **Excel-Aware:** Preserves `source_row_num` (Excel line numbers) to help operations teams map database errors back to the original spreadsheet.
+* **Normalization:** Automates sales and budget vs. actuals cleaning with configurable column mapping.
+* **Idempotency:** Running the same file twice results in a `NO_CHANGES` state, preventing duplicate data pollution.
 
-Ephemeral uploads (temp files auto-deleted)
+### ⚡ Cryptographic Change Detection
+* **Row-Level Hashing:** Calculates a `row_hash` for every incoming record.
+* **Zero-Copy Logic:** Short-circuits processing for unchanged rows.
+* **Precision:** Only rows where the *hash differs* trigger a database write. Metadata updates (like row sorting) do not trigger false data updates.
 
-Raw row count detection for fast progress bars
+<img width="2558" height="1274" alt="Screenshot 2026-02-05 032152" src="https://github.com/user-attachments/assets/cba43042-42ea-47b5-a706-c06ab7f09a74" />
+*Processing 100,000+ rows asynchronously with real-time feedback.*
 
-Preserves Excel-style row numbers (source_row_num)
+### 🔍 Deep-Diff Reconciliation
+Stakeholders don't trust "Black Box" updates. This system provides a **True Diff Summary**:
+* **Granular Reporting:** Breaks down Inserts, Updates, Conflicts, and Rejects.
+* **Cell-Level Precision:** For every updated row, the UI shows:
+    * Primary Key
+    * Original Excel Line Number
+    * **Before Value** (Snapshot)
+    * **After Value** (Proposed)
+* **Lazy Loading:** Diffs are backed by audit tables and paginated, ensuring the UI never freezes even on 100k+ row datasets.
 
-Transform
-
-Sales normalization
-
-Budget vs Actual normalization
-
-Clean primary key enforcement
-
-Configurable column mappings
-
-Load
-
-Hash-based change detection
-
-Bulk upsert with conflict protection
-
-Metadata preserved for audit
-
-⚡ Fast & Correct Change Detection
-
-Uses row-level hashing (row_hash) to short-circuit unchanged rows
-
-Only rows whose hash changes are diffed
-
-Metadata-only changes (like row position) do not trigger updates
-
-Identical reruns exit early (NO_CHANGES)
-
-🔍 True Diff Summary (Not Samples)
-
-After each run you get:
-
-Insert / Update / Conflict / Reject counts
-
-Diff grouped by column
-
-For each changed column:
-
-Primary key
-
-Source row number (Excel line)
-
-Before value
-
-After value
-
-All diffs are:
-
-Lazy-loaded (UI never freezes)
-
-Backed by the audit tables
-
-Collapsed by default
-
-🧾 Full Audit Trail
-
-Every run creates:
-
-etl_change_events – run metadata
-
-etl_row_changes – row-level before/after JSON
-
-etl_conflicts – protected field violations
-
+### 🧾 Immutable Audit Trail & Rollback
 Nothing is ever silently overwritten.
+1.  **Full Audit Logging:**
+    * `etl_change_events`: Who ran it, when, and what file.
+    * `etl_row_changes`: JSONB storage of exact before/after states.
+    * `etl_conflicts`: Logs protected field violations without crashing the pipeline.
+2.  **Linked-List State Management:**
+    * Maintains a `HEAD` pointer for the current dataset state.
+    * State images form a parent-child linked list for history traversal.
+3.  **Time-Travel Recovery:**
+    * **Single Event Rollback:** Undo a specific bad upload (Insert → Delete, Update → Restore).
+    * **Point-in-Time Recovery:** Pick a historical `change_event_id` and automatically roll back the database to that exact second, safely walking the state chain.
 
-🧠 State Images & History
+<img width="2557" height="1269" alt="Screenshot 2026-02-05 203456" src="https://github.com/user-attachments/assets/6655d5e5-1377-4c89-83a1-d3838657f85f" />
+*Full history tracking of every execution, including failures and rollbacks.*
 
-Each successful run can create a state image:
+---
 
-State images form a linked list (parent → child)
+## 🗂 Project Architecture
 
-HEAD always points to the current state
 
-Used for safe rollback and history traversal
 
-⏪ Rollback Capabilities
-1️⃣ Rollback a single change event
-
-Undo exactly one change event:
-
-INSERT → DELETE
-
-UPDATE → restore db_before
-
-Creates a new rollback change event (fully audited).
-
-2️⃣ Rollback to a point in time (⭐ powerful)
-
-Pick an earlier change_event_id and:
-
-Automatically rolls back every change after it
-
-Walks the state image chain safely
-
-Leaves HEAD at the requested historical point
-
-This is true point-in-time recovery, not a reset.
-
-🖥️ Streamlit UI
-Run ETL tab
-
-Upload files or auto-discover from data/raw
-
-Progress bars with row counts
-
-Diff summary with expandable before/after tables
-
-Download gold output
-
-Change Log tab
-
-View all change events
-
-Inspect row-level diffs
-
-Inspect conflicts
-
-Create state images
-
-Rollback (single event or point-in-time)
-
-🗂 Project Structure
+```text
 financial_etl/
-├── app.py                    # Streamlit UI
+├── app.py                  # Streamlit Entry Point (UI)
 ├── src/
-│   ├── extract.py            # File reading + row counts
-│   ├── transform_sales.py
-│   ├── transform_budget.py
-│   ├── merge.py              # Hash-aware upsert + diff aggregation
-│   ├── pipeline.py           # Orchestration
-│   ├── audit.py              # Audit writers
-│   ├── audit_queries.py      # UI queries
-│   ├── state.py              # State images + rollback logic
-│   ├── rebuild_fact.py
-│   ├── export.py
-│   ├── ddl.py                # Robust schema application
-│   └── db.py
-├── sql/
-│   └── schema.sql
+│   ├── extract.py          # File reading, hashing, row counts
+│   ├── transform_*.py      # Normalization logic (Sales/Budget)
+│   ├── merge.py            # Hash-aware upsert logic & diff generation
+│   ├── pipeline.py         # Orchestration (The "Controller")
+│   ├── audit.py            # Immutable log writers
+│   ├── state.py            # Linked-list state & rollback logic
+│   └── ddl.py              # Schema enforcement
 ├── data/
-│   ├── raw/
-│   └── gold/
-├── config/
-│   ├── db.yml
-│   └── column_maps.yml
-└── README.md
+│   ├── raw/                # Incoming CSV/Excel landing zone
+│   └── gold/               # Cleaned, governed output exports
+└── config/
+    ├── db.yml              # Database connection
+    └── column_maps.yml     # Field mapping configuration
 
-🧬 Database Tables
-Core
-
-etl_change_events
-
-etl_row_changes
-
-etl_conflicts
-
-State
-
-etl_state_images
-
-etl_state_pointer (HEAD)
-
-Staging
-
-stg_sales_orders
-
-stg_budget_transactions
-
-Gold
-
-fact_finance_monthly
-
-🛠 Setup
-1) Install dependencies
-pip install -r requirements.txt
-
-2) Configure database
-
-Edit:
-
-config/db.yml
-
-3) Run the app
-streamlit run app.py
